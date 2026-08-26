@@ -7,5 +7,6 @@ process for AI agents using Chrome DevTools MCP. It is for macOS in v0.1.0.
 :maxdepth: 2
 
 guide
+security
 api
 ```

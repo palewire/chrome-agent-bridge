@@ -70,6 +70,18 @@ chrome-agent-bridge mcp-config --profile documentation
 The displayed port is an example. Always use the snippet from your running
 profile; every launch chooses a new available loopback port.
 
+To keep the same endpoint after restarting Chrome, select an available local
+port:
+
+```sh
+chrome-agent-bridge start --profile documentation --headless --port 9222
+```
+
+The bridge checks that the requested port is available on `127.0.0.1` before
+launching Chrome. `status` and `mcp-config` show the verified port in use. If
+the port is busy, choose another one or omit `--port` to let Chrome select a
+random port.
+
 To run without a visible window:
 
 ```sh
@@ -113,15 +125,66 @@ chrome-agent-bridge uninstall-launch-agent --profile documentation
 Uninstalling removes only the named profile's LaunchAgent. It does not delete
 the dedicated profile data, logs, or state directory.
 
-## Authentication and profiles
+## Authentication, recovery, and profiles
 
-Chrome Agent Bridge does not read, export, create, or manage credentials,
-cookies, or logins. It also must not be pointed at your normal Chrome profile.
+Chrome Agent Bridge never reads, exports, creates, or manages credentials,
+cookies, or logins. It only starts Chrome with a separate data directory. Never
+point it at your normal Chrome profile, and never put passwords, session data,
+or the printed DevTools URL in tickets or logs.
 
-If an agent needs an authenticated site, start the dedicated profile **without**
-`--headless`, sign in yourself in the visible Chrome window, stop it, then
-restart that same dedicated profile with `--headless`. Keep the profile private
-and use a separate profile for each purpose that needs a different session.
+### Sign in and resume a session
+
+If an agent needs an authenticated site:
+
+1. Start the dedicated profile **without** `--headless`.
+2. Sign in yourself in the visible Chrome window. Complete any MFA, CAPTCHA,
+   consent, or device-approval step there.
+3. Close any tabs the agent should not use, stop the profile, and restart that
+   same profile with `--headless`.
+
+```sh
+chrome-agent-bridge start --profile research
+# Sign in and complete any verification in the visible window.
+chrome-agent-bridge stop --profile research
+chrome-agent-bridge start --profile research --headless
+```
+
+Headless mode cannot complete an interactive MFA, CAPTCHA, consent, or
+device-approval challenge reliably. Stop it, repeat the sign-in flow in headed
+mode, then resume headless operation. If the site still refuses the session,
+use its supported recovery flow or contact the site; do not copy cookies or
+credentials into the bridge.
+
+### Recover an expired session
+
+Sites can expire sessions independently of the bridge. Stop the profile,
+restart it in headed mode, and sign in again. Reuse the same profile to retain
+other site sessions, or create a separate profile when the site requires a
+clean login.
+
+If a profile is stuck or its state is no longer trusted, stop it first and
+delete only that profile's bridge data. For example, for the `research` profile:
+
+```sh
+chrome-agent-bridge stop --profile research
+rm -rf "$HOME/Library/Application Support/chrome-agent-bridge/profiles/research"
+rm -f "$HOME/Library/Application Support/chrome-agent-bridge/state/research.json"
+rm -f "$HOME/Library/Application Support/chrome-agent-bridge/locks/research.lock"
+rm -rf "$HOME/Library/Application Support/chrome-agent-bridge/logs/research"
+```
+
+Replace `research` with the exact profile name you intend to reset. Do not
+delete the whole `chrome-agent-bridge` directory or another profile. The next
+`start` creates a fresh profile, so all sign-ins in the reset profile are lost.
+
+### Revoke a site's session
+
+To sign out one site, use that site's own **Sign out** control in the visible
+dedicated profile, then stop the profile. For stronger protection, use the
+site's account security page to revoke active sessions or change the password.
+If the profile may have been exposed, revoke sessions from a trusted browser,
+reset the dedicated profile, and do not resume automation until the account is
+secure.
 
 ## Security and multi-agent use
 
@@ -130,11 +193,15 @@ powerful local capability:
 
 - The bridge always passes `--remote-debugging-address=127.0.0.1`; it never
   listens on a network interface.
-- It uses Chrome's dynamic port selection instead of a shared fixed port.
+- It uses Chrome's dynamic port selection by default. `--port` can reserve a
+  stable endpoint for a profile, but a predictable local endpoint should not
+  be shared in public logs or tickets.
 - Give every concurrently running agent a distinct `--profile` name.
 - Do not share a profile across agents. The bridge records its owner and Chrome
   also locks active profile data, but separate profiles avoid competing tabs,
   state, and shutdowns.
+- Use one profile per account or task when sessions must not mix.
+- Close temporary tabs and stop the profile when the task is complete.
 - Run `stop` once an agent no longer needs browser access.
 - Do not put the printed browser URL in public logs or tickets.
 

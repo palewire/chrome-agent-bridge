@@ -6,6 +6,7 @@ import fcntl
 import json
 import os
 import signal
+import socket
 import subprocess
 import time
 from contextlib import contextmanager
@@ -56,6 +57,7 @@ class BridgeState:
     headless: bool
     log_file: str
     port: int | None = None
+    requested_port: int | None = None
 
     @classmethod
     def from_file(cls, state_file: Path) -> BridgeState | None:
@@ -80,6 +82,11 @@ class BridgeState:
                 headless=bool(payload["headless"]),
                 log_file=str(payload["log_file"]),
                 port=int(payload["port"]) if payload["port"] is not None else None,
+                requested_port=(
+                    int(payload["requested_port"])
+                    if payload.get("requested_port") is not None
+                    else None
+                ),
             )
         except (KeyError, TypeError, ValueError) as error:
             raise BridgeError(f"Bridge state at {state_file} is incomplete.") from error
@@ -155,6 +162,20 @@ def check_devtools_health(port: int, timeout: float = 1.0) -> DevToolsHealth | N
     return DevToolsHealth(port=port, browser=browser, websocket_url=websocket_url)
 
 
+def check_loopback_port_available(port: int) -> None:
+    """Raise when a port cannot be used for a loopback DevTools endpoint."""
+    if not 1 <= port <= 65535:
+        raise BridgeError("DevTools port must be between 1 and 65535.")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+        try:
+            listener.bind(("127.0.0.1", port))
+        except OSError as error:
+            raise BridgeError(
+                f"DevTools port {port} is unavailable on 127.0.0.1. "
+                "Choose another port or omit --port to let Chrome choose one."
+            ) from error
+
+
 def command_for_pid(pid: int) -> str | None:
     """Return a process command line on macOS, or None when it is gone."""
     result = subprocess.run(  # noqa: S603 - `pid` is an integer from private state
@@ -187,13 +208,25 @@ class BridgeManager:
         )
         return BridgeStatus(state=state, owned=owned, health=health)
 
-    def start(self, profile: str, browser: Path, *, headless: bool) -> DevToolsHealth:
+    def start(
+        self, profile: str, browser: Path, *, headless: bool, port: int | None = None
+    ) -> DevToolsHealth:
         """Launch Chrome with a private profile and wait for a healthy endpoint."""
         paths = self.paths.create_private_directories(profile)
         with profile_lock(paths.lock_file):
             existing = self.status(paths.profile)
             if existing.is_running:
                 assert existing.health is not None
+                if (
+                    port is not None
+                    and existing.state is not None
+                    and existing.state.requested_port != port
+                ):
+                    raise BridgeError(
+                        f"Profile '{paths.profile}' is already running on "
+                        f"DevTools port {existing.health.port}. Stop it before "
+                        "choosing a different port."
+                    )
                 return existing.health
             if existing.owned:
                 assert existing.state is not None
@@ -205,9 +238,13 @@ class BridgeManager:
             if existing.state is not None:
                 self._remove_stale_state(paths)
 
+            if port is not None:
+                check_loopback_port_available(port)
             paths.active_port_file.unlink(missing_ok=True)
             log_file = self._new_log_file(paths)
-            command = self._launch_command(browser, paths.browser_data, headless)
+            command = self._launch_command(
+                browser, paths.browser_data, headless, port=port
+            )
             with log_file.open("w", encoding="utf-8") as log_handle:
                 process = subprocess.Popen(  # noqa: S603 - browser executable is validated
                     command,
@@ -223,6 +260,7 @@ class BridgeManager:
                 started_at=datetime.now(UTC).isoformat(),
                 headless=headless,
                 log_file=str(log_file),
+                requested_port=port,
             )
             state.write(paths.state_file)
             health = self._wait_for_health(process, paths)
@@ -289,17 +327,17 @@ class BridgeManager:
         return (
             expected_data_directory in command
             and "--remote-debugging-address=127.0.0.1" in command
-            and "--remote-debugging-port=0" in command
+            and f"--remote-debugging-port={state.requested_port or 0}" in command
         )
 
     def _launch_command(
-        self, browser: Path, browser_data: Path, headless: bool
+        self, browser: Path, browser_data: Path, headless: bool, *, port: int | None
     ) -> tuple[str, ...]:
         command = [
             str(browser),
             f"--user-data-dir={browser_data}",
             "--remote-debugging-address=127.0.0.1",
-            "--remote-debugging-port=0",
+            f"--remote-debugging-port={port or 0}",
             "--no-first-run",
             "--no-default-browser-check",
             "--new-window",

@@ -1,6 +1,7 @@
 """Tests for DevTools endpoint checks and process ownership state."""
 
 import json
+import socket
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from chrome_agent_bridge.manager import (
     BridgeState,
     DevToolsHealth,
     check_devtools_health,
+    check_loopback_port_available,
     read_debugging_port,
 )
 from chrome_agent_bridge.paths import BridgePaths
@@ -83,6 +85,31 @@ def test_check_devtools_health_rejects_incomplete_responses(monkeypatch):
 
 
 @pytest.mark.unit
+def test_check_loopback_port_available_rejects_an_occupied_port():
+    """A fixed port must not already serve another local process."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+        listener.bind(("127.0.0.1", 0))
+        port = listener.getsockname()[1]
+
+        with pytest.raises(BridgeError, match=rf"DevTools port {port} is unavailable"):
+            check_loopback_port_available(port)
+
+
+@pytest.mark.unit
+def test_start_rejects_an_occupied_fixed_port(tmp_path):
+    """Start checks a fixed port before attempting to launch Chrome."""
+    manager = BridgeManager(BridgePaths(tmp_path / "bridge"))
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+        listener.bind(("127.0.0.1", 0))
+        port = listener.getsockname()[1]
+
+        with pytest.raises(BridgeError, match=rf"DevTools port {port} is unavailable"):
+            manager.start(
+                "agent", Path("/Applications/Chrome"), headless=False, port=port
+            )
+
+
+@pytest.mark.unit
 def test_state_round_trip_is_private(tmp_path):
     """Owner state survives complete JSON writes."""
     state_file = tmp_path / "agent.json"
@@ -127,12 +154,13 @@ def test_mcp_config_uses_verified_browser_url(monkeypatch, tmp_path):
         headless=False,
         log_file="/private/log",
         port=43123,
+        requested_port=43123,
     ).write(paths.state_file)
     monkeypatch.setattr(
         "chrome_agent_bridge.manager.command_for_pid",
         lambda pid: (
             f"Chrome --user-data-dir={paths.browser_data} "
-            "--remote-debugging-address=127.0.0.1 --remote-debugging-port=0"
+            "--remote-debugging-address=127.0.0.1 --remote-debugging-port=43123"
         ),
     )
     monkeypatch.setattr(
@@ -177,12 +205,25 @@ def test_launch_command_keeps_debugging_on_loopback(tmp_path):
     manager = BridgeManager(BridgePaths(tmp_path / "bridge"))
 
     command = manager._launch_command(
-        Path("/Applications/Chrome"), tmp_path / "data", True
+        Path("/Applications/Chrome"), tmp_path / "data", True, port=None
     )
 
     assert "--remote-debugging-address=127.0.0.1" in command
     assert "--remote-debugging-port=0" in command
     assert "--headless=new" in command
+
+
+@pytest.mark.unit
+def test_launch_command_uses_requested_loopback_port(tmp_path):
+    """A fixed port still binds Chrome DevTools only to loopback."""
+    manager = BridgeManager(BridgePaths(tmp_path / "bridge"))
+
+    command = manager._launch_command(
+        Path("/Applications/Chrome"), tmp_path / "data", False, port=9222
+    )
+
+    assert "--remote-debugging-address=127.0.0.1" in command
+    assert "--remote-debugging-port=9222" in command
 
 
 @pytest.mark.unit
@@ -205,6 +246,31 @@ def test_start_records_the_verified_dynamic_port(monkeypatch, tmp_path):
     assert state is not None
     assert state.port == 41777
     assert state.headless
+
+
+@pytest.mark.unit
+def test_start_records_a_requested_fixed_port(monkeypatch, tmp_path):
+    """A fixed port is retained for process ownership checks after launch."""
+    manager = BridgeManager(BridgePaths(tmp_path / "bridge"))
+    health = DevToolsHealth(41777, "Chrome/1", "ws://local")
+
+    class Process:
+        pid = 456
+
+    monkeypatch.setattr(
+        "chrome_agent_bridge.manager.subprocess.Popen",
+        lambda *args, **kwargs: Process(),
+    )
+    monkeypatch.setattr(manager, "_wait_for_health", lambda process, paths: health)
+
+    assert (
+        manager.start("agent", Path("/Applications/Chrome"), headless=True, port=41777)
+        == health
+    )
+    state = BridgeState.from_file(manager.paths.for_profile("agent").state_file)
+    assert state is not None
+    assert state.port == 41777
+    assert state.requested_port == 41777
 
 
 @pytest.mark.unit
