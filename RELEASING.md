@@ -2,25 +2,62 @@
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a
 Changelog](https://keepachangelog.com/en/1.1.0/). Package versions come from
-Git tags through `setuptools-scm`; do not edit a version file.
+the `version` field in `pyproject.toml`. The release tag must match that
+version, prefixed with `v` (for example, `v0.1.0`).
+
+## One-time PyPI Setup
+
+The publication workflow uses [PyPI trusted publishing][trusted-publishing].
+It exchanges a short-lived GitHub Actions OIDC identity for permission to
+publish, so no PyPI API token or GitHub secret is needed.
+
+1. Set the `PACKAGE_IMPORT_NAME` repository variable to
+   `chrome_agent_bridge`. The test workflow uses it for the isolated package
+   import and coverage checks:
+
+   ```sh
+   gh variable set PACKAGE_IMPORT_NAME \
+     --repo palewire/chrome-agent-bridge \
+     --body chrome_agent_bridge
+   ```
+
+2. Create a protected GitHub environment named `pypi`. Require a reviewer for
+   this environment if the repository's release policy calls for approval.
+3. On PyPI, add a trusted publisher for:
+   - owner: `palewire`
+   - repository: `chrome-agent-bridge`
+   - workflow: `.github/workflows/continuous-deployment.yaml`
+   - environment: `pypi`
+
+For a package that does not exist yet, use PyPI's pending publisher form first.
+The first tagged workflow run creates the project and publishes the package.
+Do not add a `PYPI_TOKEN` secret.
+
+Homebrew packaging is intentionally deferred until the package has demonstrated
+enough demand to justify a formula.
 
 ## Release Checklist
 
-- [ ] Replace all template metadata and configure the package layout described
-      in `AGENTS.md`.
 - [ ] Document public package behavior in the Sphinx source under `docs/`.
-- [ ] Run `make docs-check`.
-- [ ] Run `make verify`.
-- [ ] Run `make package-check PACKAGE=<import-name>`.
-- [ ] Run `make coverage PACKAGE=<import-name>`.
+- [ ] Update the `version` field in `pyproject.toml`.
 - [ ] Review `CHANGELOG.md` and move relevant `Unreleased` entries into a
       dated version section.
 - [ ] Choose a major, minor, or patch version according to Semantic Versioning.
+- [ ] Run `make verify`.
+- [ ] Run `make package-check PACKAGE=chrome_agent_bridge`.
+- [ ] Run `make coverage PACKAGE=chrome_agent_bridge`.
 - [ ] Obtain explicit human approval for the version and release.
 - [ ] Merge the approved release PR.
-- [ ] With explicit human approval, create or confirm the exact version tag on
-      the release PR's merge commit to trigger package publication.
-- [ ] Confirm the release workflow published the expected package to PyPI.
+- [ ] Confirm the exact version tag points to the release PR's merge commit.
+- [ ] With explicit human approval, push the matching `vX.Y.Z` tag:
+
+  ```sh
+  git tag --annotate vX.Y.Z --message "Release vX.Y.Z" <merge-commit>
+  git push origin vX.Y.Z
+  ```
+
+- [ ] Confirm the release workflow's build and PyPI publication jobs succeeded.
+- [ ] Confirm the expected package version is available on PyPI.
 - [ ] Complete the post-merge GitHub Release follow-up below.
 - [ ] Confirm the documentation workflow deployed the matching Sphinx site.
 
@@ -35,7 +72,7 @@ or creating a release still requires explicit human approval.
    it:
 
    ```sh
-   VERSION=2.0.1
+   VERSION=vX.Y.Z
    EXPECTED_COMMIT=<release-pr-merge-commit>
    git fetch origin --tags
    test "$(git rev-parse "${VERSION}^{commit}")" = "$EXPECTED_COMMIT"
@@ -81,3 +118,5 @@ source in this repository.
 Agents may update release documentation and run the checklist's validation
 commands. They must not create tags, GitHub releases, documentation
 deployments, or package publications without explicit human approval.
+
+[trusted-publishing]: https://docs.pypi.org/trusted-publishers/
