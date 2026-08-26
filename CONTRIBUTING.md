@@ -50,7 +50,7 @@ You can launch a preview site with the following command:
 make serve-docs
 ```
 
-The documentation site is automatically built by a [GitHub Actions workflow](https://github.com/palewire/python-open-source-template/blob/main/.github/workflows/docs.yaml) that runs on every push and pull request. It checks links weekly. Protect the `docs-production` environment, configure its AWS OIDC role, and set `DOCS_DEPLOY_ENABLED` to `true` to publish the reviewed artifact from the main branch.
+The documentation site is automatically built by a [GitHub Actions workflow](https://github.com/palewire/chrome-agent-bridge/blob/main/.github/workflows/docs.yaml) that runs on every push and pull request. It checks links weekly. Protect the `docs-production` environment, configure its AWS OIDC role, and set `DOCS_DEPLOY_ENABLED` to `true` to publish the reviewed artifact from the main branch.
 
 ## Releasing
 
