@@ -18,6 +18,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Document headed authentication, session recovery, safe profile reset, and
   site-session revocation guidance.
+- Add a browser security guide covering DevTools access, loopback binding,
+  profile isolation, multi-agent separation, and temporary tab cleanup.
 
 ## [0.1.0] - 2026-08-26
 
