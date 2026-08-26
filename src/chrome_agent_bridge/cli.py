@@ -43,10 +43,19 @@ def main() -> None:
     show_default=True,
     help="Run Chrome without a visible window.",
 )
-def start(profile: str, browser: Path | None, *, headless: bool) -> None:
+@click.option(
+    "--port",
+    type=click.IntRange(1, 65535),
+    help="Use an available loopback DevTools port instead of a random port.",
+)
+def start(
+    profile: str, browser: Path | None, *, headless: bool, port: int | None
+) -> None:
     """Start Chrome and print its private DevTools URL."""
     try:
-        health = _manager().start(profile, find_browser(browser), headless=headless)
+        health = _manager().start(
+            profile, find_browser(browser), headless=headless, port=port
+        )
     except (BridgeError, InvalidProfileNameError) as error:
         _handle_error(error)
     click.echo(f"Chrome is ready at {health.browser_url}")
