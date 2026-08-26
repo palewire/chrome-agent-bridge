@@ -266,6 +266,24 @@ tool requires. Chrome Agent Bridge starts Chrome's executable inside the app
 bundle directly. Do not replace it with `open`, and do not use a Dock-launched
 Chrome window as the agent browser.
 
+## Development end-to-end test
+
+The repository includes an optional test for the full local connection:
+bridge-owned Chrome, Chrome DevTools MCP, a new local page, and its title. It
+is disabled by default, so normal tests do not need Chrome, Node, or network
+access.
+
+Run it only on macOS after making `chrome-devtools-mcp` available locally:
+
+```sh
+CHROME_AGENT_BRIDGE_RUN_MCP_E2E=1 uv run pytest tests/test_mcp_integration.py
+```
+
+By default it invokes `npx --no-install chrome-devtools-mcp`, which does not
+download packages. If that command cannot find the server, point
+`CHROME_DEVTOOLS_MCP_COMMAND` at an existing installation. The test uses a
+temporary bridge data directory and cleans up the Chrome and MCP processes.
+
 ## Roadmap
 
 - Linux browser discovery and system-appropriate data directories.
