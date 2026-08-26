@@ -9,6 +9,7 @@ from typing import NoReturn
 import click
 
 from .browser import find_browser
+from .launch_agent import LaunchAgentManager
 from .manager import BridgeError, BridgeManager
 from .paths import InvalidProfileNameError
 
@@ -16,6 +17,11 @@ from .paths import InvalidProfileNameError
 def _manager() -> BridgeManager:
     """Create the bridge manager for one CLI invocation."""
     return BridgeManager()
+
+
+def _launch_agent_manager() -> LaunchAgentManager:
+    """Create the LaunchAgent manager for one CLI invocation."""
+    return LaunchAgentManager(_manager())
 
 
 def _handle_error(error: Exception) -> NoReturn:
@@ -133,3 +139,48 @@ def mcp_config(profile: str) -> None:
     except (BridgeError, InvalidProfileNameError) as error:
         _handle_error(error)
     click.echo(json.dumps(config, indent=2))
+
+
+@main.command(name="install-launch-agent")
+@click.option(
+    "--profile", default="default", show_default=True, help="Dedicated profile name."
+)
+@click.option(
+    "--browser",
+    type=click.Path(path_type=Path, dir_okay=False),
+    help="Chrome or Chromium executable. Detected automatically when omitted.",
+)
+@click.option(
+    "--headless/--headed",
+    default=True,
+    show_default=True,
+    help="Start the profile without a visible window at login.",
+)
+def install_launch_agent(profile: str, browser: Path | None, *, headless: bool) -> None:
+    """Install and immediately load a profile's macOS LaunchAgent."""
+    try:
+        detected_browser = find_browser(browser)
+        agent_paths = _launch_agent_manager().install(
+            profile, detected_browser, headless=headless
+        )
+    except (BridgeError, InvalidProfileNameError) as error:
+        _handle_error(error)
+    click.echo(f"LaunchAgent installed: {agent_paths.label}")
+    click.echo(f"Profile: {profile}")
+    click.echo("Use uninstall-launch-agent to stop the owned browser and remove it.")
+
+
+@main.command(name="uninstall-launch-agent")
+@click.option(
+    "--profile", default="default", show_default=True, help="Dedicated profile name."
+)
+def uninstall_launch_agent(profile: str) -> None:
+    """Unload and remove a profile's macOS LaunchAgent."""
+    try:
+        removed = _launch_agent_manager().uninstall(profile)
+    except (BridgeError, InvalidProfileNameError) as error:
+        _handle_error(error)
+    if removed:
+        click.echo(f"LaunchAgent removed for profile '{profile}'.")
+    else:
+        click.echo(f"No LaunchAgent installed for profile '{profile}'.")

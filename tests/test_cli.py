@@ -7,6 +7,7 @@ import pytest
 from click.testing import CliRunner
 
 from chrome_agent_bridge.cli import main
+from chrome_agent_bridge.launch_agent import LaunchAgentPaths
 from chrome_agent_bridge.manager import (
     BridgeError,
     BridgeState,
@@ -130,6 +131,60 @@ def test_mcp_config_prints_json(monkeypatch):
 
     assert result.exit_code == 0
     assert '"--browser-url"' in result.output
+
+
+@pytest.mark.unit
+def test_install_launch_agent_reports_service(monkeypatch, tmp_path):
+    """The install command reports the named service it loaded."""
+
+    class Manager:
+        def install(self, profile, browser, *, headless):
+            assert profile == "research"
+            assert browser == tmp_path / "Chrome"
+            assert headless
+            return LaunchAgentPaths(
+                "com.palewire.chrome-agent-bridge.research",
+                tmp_path / "agent.plist",
+                "gui/123",
+            )
+
+    monkeypatch.setattr(
+        "chrome_agent_bridge.cli._launch_agent_manager", lambda: Manager()
+    )
+    monkeypatch.setattr(
+        "chrome_agent_bridge.cli.find_browser", lambda browser: tmp_path / "Chrome"
+    )
+
+    result = CliRunner().invoke(
+        main, ["install-launch-agent", "--profile", "research", "--headless"]
+    )
+
+    assert result.exit_code == 0
+    assert (
+        "LaunchAgent installed: com.palewire.chrome-agent-bridge.research"
+        in result.output
+    )
+
+
+@pytest.mark.unit
+def test_uninstall_launch_agent_reports_missing_service(monkeypatch):
+    """The uninstall command distinguishes an absent service."""
+
+    class Manager:
+        def uninstall(self, profile):
+            assert profile == "research"
+            return False
+
+    monkeypatch.setattr(
+        "chrome_agent_bridge.cli._launch_agent_manager", lambda: Manager()
+    )
+
+    result = CliRunner().invoke(
+        main, ["uninstall-launch-agent", "--profile", "research"]
+    )
+
+    assert result.exit_code == 0
+    assert "No LaunchAgent installed" in result.output
 
 
 @pytest.mark.unit
