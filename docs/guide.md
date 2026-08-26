@@ -49,7 +49,8 @@ chrome-agent-bridge status --profile documentation
 chrome-agent-bridge mcp-config --profile documentation
 ```
 
-`mcp-config` prints a snippet such as:
+`mcp-config` prints a ready-to-paste configuration. The port in the example is
+only illustrative:
 
 ```json
 {
@@ -67,20 +68,55 @@ chrome-agent-bridge mcp-config --profile documentation
 }
 ```
 
-The displayed port is an example. Always use the snippet from your running
-profile; every launch chooses a new available loopback port.
+With the default settings, every launch chooses a new available loopback port.
+Use the snippet from the current running profile whenever you connect an MCP
+client this way.
 
-To keep the same endpoint after restarting Chrome, select an available local
-port:
+### Keep one endpoint for GitHub Copilot
+
+If you want to configure GitHub Copilot once and reuse the same endpoint, start
+the profile with an available fixed loopback port:
 
 ```sh
 chrome-agent-bridge start --profile documentation --headless --port 9222
 ```
 
+Then add this JSON to the GitHub Copilot MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--browser-url",
+        "http://127.0.0.1:9222"
+      ]
+    }
+  }
+}
+```
+
+Use this startup order whenever you need the connection:
+
+1. Start the bridge with the same profile and port:
+   `chrome-agent-bridge start --profile documentation --headless --port 9222`
+2. Start or reconnect GitHub Copilot, which uses the saved MCP configuration.
+3. Stop the bridge when browser access is no longer needed:
+   `chrome-agent-bridge stop --profile documentation`
+
 The bridge checks that the requested port is available on `127.0.0.1` before
 launching Chrome. `status` and `mcp-config` show the verified port in use. If
-the port is busy, choose another one or omit `--port` to let Chrome select a
-random port.
+the port is busy, choose another local port and update the MCP configuration,
+or omit `--port` to return to random-port mode.
+
+Fixed ports are convenient when a client stores its MCP configuration, but a
+random port is preferable when you want a fresh endpoint on every launch or
+when several independent profiles are started without preassigning ports.
+Random ports also reduce the chance of accidentally connecting a client to a
+different browser left on a predictable port.
 
 To run without a visible window:
 
