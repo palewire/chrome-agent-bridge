@@ -38,6 +38,17 @@ chrome-agent-bridge status --profile research
 chrome-agent-bridge stop --profile research
 ```
 
+To start a named profile automatically at macOS login, install its LaunchAgent:
+
+```sh
+chrome-agent-bridge install-launch-agent --profile research
+chrome-agent-bridge uninstall-launch-agent --profile research
+```
+
+The LaunchAgent starts the same private, loopback-only profile with a dynamic
+DevTools port. Uninstalling it stops the bridge-owned browser but keeps profile
+data and logs.
+
 To keep the same endpoint across restarts, choose an available local port:
 
 ```sh

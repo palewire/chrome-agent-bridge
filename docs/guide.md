@@ -94,6 +94,37 @@ Stop it when finished:
 chrome-agent-bridge stop --profile documentation
 ```
 
+## Start at login with a LaunchAgent
+
+On macOS, install a per-profile LaunchAgent when the bridge should start
+automatically for your user:
+
+```sh
+chrome-agent-bridge install-launch-agent --profile documentation
+```
+
+The command writes a private plist under `~/Library/LaunchAgents`, loads it
+with `launchctl`, and starts the same dedicated profile as the regular `start`
+command. It embeds the detected browser executable so launchd does not depend
+on your shell `PATH`. The service runs once at login; Chrome Agent Bridge owns
+the browser process and records its dynamically selected loopback port in the
+profile state. It never uses the standard Chrome profile or a fixed port.
+
+Use a visible browser when you need to sign in manually:
+
+```sh
+chrome-agent-bridge install-launch-agent --profile documentation --headed
+```
+
+Remove the service and stop the browser it owns with:
+
+```sh
+chrome-agent-bridge uninstall-launch-agent --profile documentation
+```
+
+Uninstalling removes only the named profile's LaunchAgent. It does not delete
+the dedicated profile data, logs, or state directory.
+
 ## Authentication, recovery, and profiles
 
 Chrome Agent Bridge never reads, exports, creates, or manages credentials,
