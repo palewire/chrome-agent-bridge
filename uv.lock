@@ -507,6 +507,116 @@ wheels = [
 ]
 
 [[package]]
+name = "chrome-agent-bridge"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "click" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "check-manifest" },
+    { name = "check-wheel-contents" },
+    { name = "deptry" },
+    { name = "pre-commit" },
+    { name = "ruff" },
+    { name = "setuptools-scm" },
+    { name = "twine" },
+    { name = "ty" },
+    { name = "vulture" },
+    { name = "zizmor" },
+]
+docs = [
+    { name = "myst-parser" },
+    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sphinx-autobuild" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-palewire-theme" },
+    { name = "sphinxcontrib-mermaid" },
+]
+notebooks = [
+    { name = "altair" },
+    { name = "ipywidgets" },
+    { name = "jupyterlab" },
+    { name = "openpyxl" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "rich" },
+    { name = "xlrd" },
+]
+test = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
+]
+test-extras = [
+    { name = "freezegun" },
+    { name = "hypothesis" },
+    { name = "pytest-env" },
+    { name = "pytest-ordering" },
+    { name = "pytest-randomly" },
+    { name = "pytest-rerunfailures" },
+    { name = "pytest-runner" },
+    { name = "pytest-sugar" },
+    { name = "pytest-vcr" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "click", specifier = ">=8.1" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "check-manifest" },
+    { name = "check-wheel-contents" },
+    { name = "deptry" },
+    { name = "pre-commit" },
+    { name = "ruff" },
+    { name = "setuptools-scm" },
+    { name = "twine" },
+    { name = "ty" },
+    { name = "vulture" },
+    { name = "zizmor" },
+]
+docs = [
+    { name = "myst-parser" },
+    { name = "sphinx" },
+    { name = "sphinx-autobuild" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-palewire-theme", specifier = ">=0.1.8" },
+    { name = "sphinxcontrib-mermaid" },
+]
+notebooks = [
+    { name = "altair" },
+    { name = "ipywidgets" },
+    { name = "jupyterlab" },
+    { name = "openpyxl" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "rich" },
+    { name = "xlrd" },
+]
+test = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
+]
+test-extras = [
+    { name = "freezegun" },
+    { name = "hypothesis" },
+    { name = "pytest-env" },
+    { name = "pytest-ordering" },
+    { name = "pytest-randomly" },
+    { name = "pytest-rerunfailures" },
+    { name = "pytest-runner" },
+    { name = "pytest-sugar" },
+    { name = "pytest-vcr" },
+]
+
+[[package]]
 name = "click"
 version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3814,111 +3924,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/07/5a/377161c2d3538d1990d7af382c79f3b2372e880b65de21b01b1a2b78691e/xlrd-2.0.2.tar.gz", hash = "sha256:08b5e25de58f21ce71dc7db3b3b8106c1fa776f3024c54e45b45b374e89234c9", size = 100167, upload-time = "2025-06-14T08:46:39.039Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1a/62/c8d562e7766786ba6587d09c5a8ba9f718ed3fa8af7f4553e8f91c36f302/xlrd-2.0.2-py2.py3-none-any.whl", hash = "sha256:ea762c3d29f4cca48d82df517b6d89fbce4db3107f9d78713e48cd321d5c9aa9", size = 96555, upload-time = "2025-06-14T08:46:37.766Z" },
-]
-
-[[package]]
-name = "your-package-name"
-source = { editable = "." }
-
-[package.dev-dependencies]
-dev = [
-    { name = "check-manifest" },
-    { name = "check-wheel-contents" },
-    { name = "deptry" },
-    { name = "pre-commit" },
-    { name = "ruff" },
-    { name = "setuptools-scm" },
-    { name = "twine" },
-    { name = "ty" },
-    { name = "vulture" },
-    { name = "zizmor" },
-]
-docs = [
-    { name = "myst-parser" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "sphinx-autobuild" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-palewire-theme" },
-    { name = "sphinxcontrib-mermaid" },
-]
-notebooks = [
-    { name = "altair" },
-    { name = "ipywidgets" },
-    { name = "jupyterlab" },
-    { name = "openpyxl" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "rich" },
-    { name = "xlrd" },
-]
-test = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-timeout" },
-    { name = "pytest-xdist" },
-]
-test-extras = [
-    { name = "freezegun" },
-    { name = "hypothesis" },
-    { name = "pytest-env" },
-    { name = "pytest-ordering" },
-    { name = "pytest-randomly" },
-    { name = "pytest-rerunfailures" },
-    { name = "pytest-runner" },
-    { name = "pytest-sugar" },
-    { name = "pytest-vcr" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "check-manifest" },
-    { name = "check-wheel-contents" },
-    { name = "deptry" },
-    { name = "pre-commit" },
-    { name = "ruff" },
-    { name = "setuptools-scm" },
-    { name = "twine" },
-    { name = "ty" },
-    { name = "vulture" },
-    { name = "zizmor" },
-]
-docs = [
-    { name = "myst-parser" },
-    { name = "sphinx" },
-    { name = "sphinx-autobuild" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-palewire-theme", specifier = ">=0.1.8" },
-    { name = "sphinxcontrib-mermaid" },
-]
-notebooks = [
-    { name = "altair" },
-    { name = "ipywidgets" },
-    { name = "jupyterlab" },
-    { name = "openpyxl" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "rich" },
-    { name = "xlrd" },
-]
-test = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-timeout" },
-    { name = "pytest-xdist" },
-]
-test-extras = [
-    { name = "freezegun" },
-    { name = "hypothesis" },
-    { name = "pytest-env" },
-    { name = "pytest-ordering" },
-    { name = "pytest-randomly" },
-    { name = "pytest-rerunfailures" },
-    { name = "pytest-runner" },
-    { name = "pytest-sugar" },
-    { name = "pytest-vcr" },
 ]
 
 [[package]]

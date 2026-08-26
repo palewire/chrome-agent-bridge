@@ -1,20 +1,21 @@
 [build-system]
-requires = ["setuptools>=84.0.0", "setuptools_scm>=10.2.1"]
+requires = ["setuptools>=84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "your-package-name"
-dynamic = ["version"]
+name = "chrome-agent-bridge"
+version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = []
-authors = [{ name = "Your Name", email = "you@example.com" }]
-description = "A short description of your package"
-keywords = []
+dependencies = ["click>=8.1"]
+authors = [{ name = "Palewire" }]
+description = "A safe local Chrome bridge for AI agents using Chrome DevTools MCP"
+keywords = ["ai", "chrome", "chromium", "devtools", "mcp"]
 license = "MIT"
 license-files = ["LICENSE"]
 readme = "README.md"
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Environment :: MacOS X",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -24,12 +25,12 @@ classifiers = [
 ]
 
 [project.urls]
-Documentation = "https://example.com/your-package-name"
-Source = "https://github.com/your-org/your-package-name"
-Issues = "https://github.com/your-org/your-package-name/issues"
+Documentation = "https://palewi.re/chrome-agent-bridge/"
+Source = "https://github.com/palewire/chrome-agent-bridge"
+Issues = "https://github.com/palewire/chrome-agent-bridge/issues"
 
-# [project.scripts]
-# your-command = "your_package_name.cli:main"
+[project.scripts]
+chrome-agent-bridge = "chrome_agent_bridge.cli:main"
 
 [dependency-groups]
 dev = [
@@ -80,14 +81,11 @@ notebooks = [
     "altair",
 ]
 
-# Adopt a src/ layout when adding a library:
-# [tool.setuptools.package-dir]
-# "" = "src"
-#
-# [tool.setuptools.packages.find]
-# where = ["src"]
+[tool.setuptools.package-dir]
+"" = "src"
 
-[tool.setuptools_scm]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 target-version = "py311"
@@ -171,7 +169,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-# Set source = ["your_package_name"] after adding the library package.
+source = ["chrome_agent_bridge"]
 branch = true
 relative_files = true
 omit = ["*/__pycache__/*"]
@@ -180,7 +178,7 @@ omit = ["*/__pycache__/*"]
 python-version = "3.11"
 
 [tool.ty.src]
-# Set include = ["src/your_package_name"] after adding the library package.
+include = ["src/chrome_agent_bridge"]
 exclude = [
     "tests/**",
     "build/**",

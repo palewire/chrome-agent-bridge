@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from importlib.metadata import metadata
 from importlib.metadata import version as distribution_version
 
-distribution = metadata("your-package-name")
+distribution = metadata("chrome-agent-bridge")
 project = distribution["Name"]
 author = distribution["Author"] or distribution["Author-email"]
 version = distribution_version(project)
@@ -30,7 +30,7 @@ extensions = [
 ]
 
 autodoc_member_order = "bysource"
-autodoc_typehints = "description"
+autodoc_typehints = "none"
 autodoc_default_options = {
     "members": True,
     "member-order": "bysource",
@@ -49,8 +49,6 @@ linkcheck_timeout = 10
 linkcheck_retries = 2
 
 html_theme = "palewire"
-# Set this after choosing the production documentation URL. The Palewire extension
-# derives the theme canonical URL from html_baseurl.
-# html_baseurl = "https://docs.example.com/"
+html_baseurl = "https://palewi.re/chrome-agent-bridge/"
 palewire_layout = "wide"
 palewire_navigation = "sidebar"

@@ -1,51 +1,60 @@
-# Python Open Source Template
+# Chrome Agent Bridge
 
-A starter repository for Python packages with `uv`, Ruff, ty, pytest, Sphinx,
-GitHub Actions, and agent-friendly project guidance.
+Run a dedicated local Chrome or Chromium profile for AI agents that connect
+through Chrome DevTools MCP. The bridge starts Chrome with a random
+**loopback-only** debugging port, tracks the process it owns, and never uses
+your normal browser profile.
 
-## Start a Project
+> **macOS only in v0.1.0.** Linux and Windows support are planned.
 
-1. Use this template to create a repository.
-2. Complete [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) before the first release.
-3. Bootstrap the checkout and install development dependencies:
+## Install
 
-   ```sh
-   make bootstrap
-   ```
+```sh
+uv tool install chrome-agent-bridge
+```
 
-The template intentionally does not define a package, API, or application.
-Choose those when adapting it.
+## Use
 
-`make bootstrap` is safe to run again. In a linked Git worktree, it links the
-primary checkout's ignored `.env` when one exists, without replacing any local
-file. It also creates an ignored `.env.worktree` containing a stable
-`WORKTREE_ID` for namespacing ports, databases, caches, or containers. Existing
-local settings in that file are preserved.
+Start a dedicated, visible browser profile:
 
-Applications must opt in to loading dotenv files. When supported, load the
-shared `.env` first and `.env.worktree` second so worktree-local values take
-precedence. The bootstrap does not assume a web framework or dotenv library.
+```sh
+chrome-agent-bridge start --profile research
+```
+
+Sign in to sites manually in that visible browser if needed. Then stop it and
+restart it for an agent in headless mode:
+
+```sh
+chrome-agent-bridge stop --profile research
+chrome-agent-bridge start --profile research --headless
+chrome-agent-bridge mcp-config --profile research
+```
+
+Copy the printed MCP configuration into your agent's configuration. Check or
+stop a profile at any time:
+
+```sh
+chrome-agent-bridge status --profile research
+chrome-agent-bridge stop --profile research
+```
+
+The bridge does not collect, read, export, or manage credentials, cookies, or
+logins. The dedicated profile remains under your macOS Application Support
+folder and must not be your standard Chrome profile.
+
+## Security
+
+- DevTools listens only on `127.0.0.1` and uses a new port each start.
+- Give each person or agent a separate `--profile` name.
+- Treat a running DevTools endpoint as powerful local access to that profile.
+  Stop it when it is not needed.
+
+See the [full documentation](https://palewi.re/chrome-agent-bridge/) for
+troubleshooting, multi-agent guidance, and macOS launcher notes.
 
 ## Development
 
 ```sh
-make check   # Fast lint, format, and type checks
-make verify  # Checks, tests, package build, and strict documentation build
+make bootstrap
+make verify
 ```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contributor guidance and
-[AGENTS.md](AGENTS.md) for agent instructions.
-
-## Dev Container
-
-Open the repository in a Dev Container to use the pinned Python and uv
-environment. It installs all dependency groups and the configured Git hooks on
-creation, while retaining the uv download cache between rebuilds.
-
-## Documentation and Releases
-
-Documentation lives in `docs/` and is built with Sphinx using the Palewire
-theme. The documentation workflow builds every push and pull request.
-
-Follow [RELEASING.md](RELEASING.md) for the release checklist and
-[CHANGELOG.md](CHANGELOG.md) for user-facing changes.

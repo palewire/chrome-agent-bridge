@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Add the `chrome-agent-bridge` macOS CLI for safely running a dedicated,
+  loopback-only Chrome DevTools endpoint for AI agents.
 ### Changed
 
 ### Fixed
