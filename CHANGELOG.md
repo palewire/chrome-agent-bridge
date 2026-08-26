@@ -16,6 +16,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Security
 
+- Document headed authentication, session recovery, safe profile reset, and
+  site-session revocation guidance.
+
 ## [0.1.0] - 2026-08-26
 
 ### Added
