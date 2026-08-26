@@ -69,3 +69,20 @@ troubleshooting, multi-agent guidance, and macOS launcher notes.
 make bootstrap
 make verify
 ```
+
+### Optional MCP end-to-end test
+
+The normal test suite does not require Chrome, Node, or network access. To run
+the bridge-to-MCP test, use macOS with Chrome or Chromium and a local
+`chrome-devtools-mcp` installation:
+
+```sh
+CHROME_AGENT_BRIDGE_RUN_MCP_E2E=1 uv run pytest tests/test_mcp_integration.py
+```
+
+The test starts a temporary, headless bridge profile, attaches
+`chrome-devtools-mcp` through its verified DevTools URL, opens a local data
+page, reads its title, and stops both processes. It uses
+`npx --no-install chrome-devtools-mcp` by default, so it never downloads the
+MCP server. Set `CHROME_DEVTOOLS_MCP_COMMAND` to the command for an existing
+installation when it is not available to `npx`.
