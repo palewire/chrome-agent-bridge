@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Support an optional, checked loopback DevTools port with `start --port`.
+
 ### Changed
 
 ### Fixed

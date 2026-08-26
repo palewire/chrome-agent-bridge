@@ -21,9 +21,10 @@ def test_start_prints_private_endpoint(monkeypatch):
     """Start reports the verified endpoint rather than a guessed fixed port."""
 
     class Manager:
-        def start(self, profile, browser, *, headless):
+        def start(self, profile, browser, *, headless, port):
             assert profile == "research"
             assert headless
+            assert port is None
             return DevToolsHealth(41000, "Chrome/1", "ws://local")
 
     monkeypatch.setattr("chrome_agent_bridge.cli._manager", lambda: Manager())
@@ -35,6 +36,39 @@ def test_start_prints_private_endpoint(monkeypatch):
 
     assert result.exit_code == 0
     assert "http://127.0.0.1:41000" in result.output
+
+
+@pytest.mark.unit
+def test_start_passes_requested_port(monkeypatch):
+    """Start passes an explicit fixed port to the bridge manager."""
+
+    class Manager:
+        def start(self, profile, browser, *, headless, port):
+            assert profile == "research"
+            assert not headless
+            assert port == 9222
+            return DevToolsHealth(port, "Chrome/1", "ws://local")
+
+    monkeypatch.setattr("chrome_agent_bridge.cli._manager", lambda: Manager())
+    monkeypatch.setattr(
+        "chrome_agent_bridge.cli.find_browser", lambda browser: "/Chrome"
+    )
+
+    result = CliRunner().invoke(
+        main, ["start", "--profile", "research", "--port", 9222]
+    )
+
+    assert result.exit_code == 0
+    assert "http://127.0.0.1:9222" in result.output
+
+
+@pytest.mark.unit
+def test_start_rejects_out_of_range_port():
+    """Start rejects values that cannot be TCP port numbers."""
+    result = CliRunner().invoke(main, ["start", "--port", 65536])
+
+    assert result.exit_code != 0
+    assert "1<=x<=65535" in result.output
 
 
 @pytest.mark.unit
@@ -106,6 +140,7 @@ def test_status_and_doctor_report_a_healthy_profile(monkeypatch, tmp_path):
 
     assert status_result.exit_code == 0
     assert "Status: running" in status_result.output
+    assert "DevTools: http://127.0.0.1:41000" in status_result.output
     assert doctor_result.exit_code == 0
     assert "DevTools health: healthy (http://127.0.0.1:41000)" in doctor_result.output
 

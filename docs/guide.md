@@ -70,6 +70,18 @@ chrome-agent-bridge mcp-config --profile documentation
 The displayed port is an example. Always use the snippet from your running
 profile; every launch chooses a new available loopback port.
 
+To keep the same endpoint after restarting Chrome, select an available local
+port:
+
+```sh
+chrome-agent-bridge start --profile documentation --headless --port 9222
+```
+
+The bridge checks that the requested port is available on `127.0.0.1` before
+launching Chrome. `status` and `mcp-config` show the verified port in use. If
+the port is busy, choose another one or omit `--port` to let Chrome select a
+random port.
+
 To run without a visible window:
 
 ```sh
@@ -150,7 +162,9 @@ powerful local capability:
 
 - The bridge always passes `--remote-debugging-address=127.0.0.1`; it never
   listens on a network interface.
-- It uses Chrome's dynamic port selection instead of a shared fixed port.
+- It uses Chrome's dynamic port selection by default. `--port` can reserve a
+  stable endpoint for a profile, but a predictable local endpoint should not
+  be shared in public logs or tickets.
 - Give every concurrently running agent a distinct `--profile` name.
 - Do not share a profile across agents. The bridge records its owner and Chrome
   also locks active profile data, but separate profiles avoid competing tabs,
