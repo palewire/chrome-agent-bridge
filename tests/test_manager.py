@@ -239,7 +239,9 @@ def test_start_records_the_verified_dynamic_port(monkeypatch, tmp_path):
         "chrome_agent_bridge.manager.subprocess.Popen",
         lambda *args, **kwargs: Process(),
     )
-    monkeypatch.setattr(manager, "_wait_for_health", lambda process, paths: health)
+    monkeypatch.setattr(
+        manager, "_wait_for_health", lambda process, paths, requested_port: health
+    )
 
     assert manager.start("agent", Path("/Applications/Chrome"), headless=True) == health
     state = BridgeState.from_file(manager.paths.for_profile("agent").state_file)
@@ -261,7 +263,9 @@ def test_start_records_a_requested_fixed_port(monkeypatch, tmp_path):
         "chrome_agent_bridge.manager.subprocess.Popen",
         lambda *args, **kwargs: Process(),
     )
-    monkeypatch.setattr(manager, "_wait_for_health", lambda process, paths: health)
+    monkeypatch.setattr(
+        manager, "_wait_for_health", lambda process, paths, requested_port: health
+    )
 
     assert (
         manager.start("agent", Path("/Applications/Chrome"), headless=True, port=41777)
@@ -286,7 +290,9 @@ def test_start_removes_state_when_chrome_never_becomes_healthy(monkeypatch, tmp_
         "chrome_agent_bridge.manager.subprocess.Popen",
         lambda *args, **kwargs: Process(),
     )
-    monkeypatch.setattr(manager, "_wait_for_health", lambda process, paths: None)
+    monkeypatch.setattr(
+        manager, "_wait_for_health", lambda process, paths, requested_port: None
+    )
     monkeypatch.setattr(
         manager, "_stop_local_process", lambda process: stopped.append(process.pid)
     )
@@ -296,6 +302,33 @@ def test_start_removes_state_when_chrome_never_becomes_healthy(monkeypatch, tmp_
 
     assert stopped == [456]
     assert BridgeState.from_file(manager.paths.for_profile("agent").state_file) is None
+
+
+@pytest.mark.unit
+def test_wait_for_health_checks_only_the_requested_fixed_port(monkeypatch, tmp_path):
+    """A fixed port does not depend on Chrome's dynamic-port file."""
+    manager = BridgeManager(BridgePaths(tmp_path / "bridge"))
+    paths = manager.paths.create_private_directories("agent")
+    paths.active_port_file.write_text(
+        "41111\n/devtools/browser/other\n", encoding="utf-8"
+    )
+    health = DevToolsHealth(9222, "Chrome/1", "ws://127.0.0.1:9222/devtools/browser/a")
+    checked_ports = []
+
+    class Process:
+        def poll(self):
+            return None
+
+    def fake_health_check(port):
+        checked_ports.append(port)
+        return health if port == 9222 else None
+
+    monkeypatch.setattr(
+        "chrome_agent_bridge.manager.check_devtools_health", fake_health_check
+    )
+
+    assert manager._wait_for_health(Process(), paths, 9222) == health
+    assert checked_ports == [9222]
 
 
 @pytest.mark.unit
