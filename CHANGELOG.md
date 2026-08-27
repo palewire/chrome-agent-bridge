@@ -15,6 +15,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Check the requested loopback DevTools port during startup, so headed Chrome
+  profiles using `start --port` can become ready.
+
 ### Removed
 
 ### Security

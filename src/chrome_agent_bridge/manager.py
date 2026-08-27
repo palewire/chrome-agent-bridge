@@ -263,7 +263,7 @@ class BridgeManager:
                 requested_port=port,
             )
             state.write(paths.state_file)
-            health = self._wait_for_health(process, paths)
+            health = self._wait_for_health(process, paths, port)
             if health is None:
                 self._stop_local_process(process)
                 paths.state_file.unlink(missing_ok=True)
@@ -352,13 +352,16 @@ class BridgeManager:
         return paths.log_directory / f"chrome-{timestamp}.log"
 
     def _wait_for_health(
-        self, process: subprocess.Popen[bytes], paths: ProfilePaths
+        self,
+        process: subprocess.Popen[bytes],
+        paths: ProfilePaths,
+        requested_port: int | None,
     ) -> DevToolsHealth | None:
         deadline = time.monotonic() + START_TIMEOUT_SECONDS
         while time.monotonic() < deadline:
             if process.poll() is not None:
                 return None
-            port = read_debugging_port(paths.active_port_file)
+            port = requested_port or read_debugging_port(paths.active_port_file)
             if port is not None and (health := check_devtools_health(port)):
                 return health
             time.sleep(0.1)
